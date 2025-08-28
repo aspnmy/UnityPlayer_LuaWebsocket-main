@@ -254,7 +254,7 @@ end
 
 -- 生成随机密钥
 local function generate_key()
-    math.randomseed(os.time() + abs(tonumber(tostring({}):sub(8)))) -- 简单的随机种子
+    math.randomseed(os.time() + math.abs(tonumber(tostring({}):sub(8)))) -- 简单的随机种子
     local r1 = mrandom(0, 0xfffffff)
     local r2 = mrandom(0, 0xfffffff)
     local r3 = mrandom(0, 0xfffffff)

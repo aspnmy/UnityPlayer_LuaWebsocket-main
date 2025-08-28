@@ -5,9 +5,9 @@ local tinsert = table.insert
 local tconcat = table.concat
 
 -- 导入必要的模块
-local frame = require('native_websocket.frame')
-local handshake = require('native_websocket.handshake')
-local tools = require('native_websocket.tools')
+local frame = require('Src.caixia_frame')
+local handshake = require('Src.caixia_handshake')
+local tools = require('Src.caixia_tools')
 
 -- 接收WebSocket数据
 local function receive(self)

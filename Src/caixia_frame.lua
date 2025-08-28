@@ -1,5 +1,5 @@
 -- 原生Lua WebSocket帧处理
--- 遵循WebSocket RFC: http://tools.ietf.org/html/rfc6455
+-- 遵循WebSocket RFC: http://CaiXiaTools.ietf.org/html/rfc6455
 -- 不依赖任何外部库
 
 local tremove = table.remove
@@ -15,17 +15,17 @@ local mrandom = math.random
 local unpack = table.unpack
 
 -- 导入工具函数
-local tools = require('native_websocket.tools')
-local band = tools.band
-local bxor = tools.bxor
-local bor = tools.bor
-local rshift = tools.rshift
-local write_int8 = tools.write_int8
-local write_int16 = tools.write_int16
-local write_int32 = tools.write_int32
-local read_int8 = tools.read_int8
-local read_int16 = tools.read_int16
-local read_int32 = tools.read_int32
+local CaiXiaTools = require('Src.caixia_tools')
+local band = CaiXiaTools.band
+local bxor = CaiXiaTools.bxor
+local bor = CaiXiaTools.bor
+local rshift = CaiXiaTools.rshift
+local write_int8 = CaiXiaTools.write_int8
+local write_int16 = CaiXiaTools.write_int16
+local write_int32 = CaiXiaTools.write_int32
+local read_int8 = CaiXiaTools.read_int8
+local read_int16 = CaiXiaTools.read_int16
+local read_int32 = CaiXiaTools.read_int32
 
 -- WebSocket操作码定义
 local CONTINUATION = 0

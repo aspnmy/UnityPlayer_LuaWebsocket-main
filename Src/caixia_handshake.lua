@@ -5,9 +5,9 @@ local tinsert = table.insert
 local tconcat = table.concat
 
 -- 导入工具函数
-local tools = require('native_websocket.tools')
-local sha1 = tools.sha1
-local base64_encode = tools.base64.encode
+local CaiXiaTools = require('Src.caixia_tools')
+local sha1 = CaiXiaTools.sha1
+local base64_encode = CaiXiaTools.base64.encode
 
 -- WebSocket GUID常量
 local guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
