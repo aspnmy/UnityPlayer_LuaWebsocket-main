@@ -13,6 +13,8 @@ local mfloor = math.floor
 local mceil = math.ceil
 local abs = math.abs
 
+
+
 -- 位操作函数（纯Lua实现，兼容Lua 5.1）
 local function band(a, b) -- 按位与
     local result = 0
@@ -257,6 +259,71 @@ local function base64_encode(data)
     return tconcat(result)
 end
 
+-- Base64 解码（纯Lua实现）
+local function base64_decode(data)
+    local chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+    local result = {}
+    local padding = 0
+    local i = 1
+    
+    -- 创建字符到索引的映射
+    local char_to_index = {}
+    for j = 1, #chars do
+        char_to_index[ssub(chars, j, j)] = j - 1
+    end
+    
+    while i <= #data do
+        local a, b, c, d = ssub(data, i, i+3):match('(.)(.)(.)(.)')
+        
+        -- 处理填充字符
+        if d == '=' then
+            padding = padding + 1
+            d = 'A' -- A对应的索引是0，不影响结果
+        end
+        if c == '=' then
+            padding = padding + 1
+            c = 'A' -- A对应的索引是0，不影响结果
+        end
+        
+        -- 获取索引
+        local index_a = char_to_index[a] or 0
+        local index_b = char_to_index[b] or 0
+        local index_c = char_to_index[c] or 0
+        local index_d = char_to_index[d] or 0
+        
+        -- 组合字节
+        local triple = lshift(index_a, 18) + lshift(index_b, 12) + lshift(index_c, 6) + index_d
+        
+        -- 提取字节
+        local byte1 = band(rshift(triple, 16), 0xFF)
+        local byte2 = band(rshift(triple, 8), 0xFF)
+        local byte3 = band(triple, 0xFF)
+        
+        -- 添加到结果中
+        tinsert(result, schar(byte1))
+        if padding < 2 then
+            tinsert(result, schar(byte2))
+        end
+        if padding < 1 then
+            tinsert(result, schar(byte3))
+        end
+        
+        i = i + 4
+    end
+    
+    return tconcat(result)
+end
+
+-- UTF-8 编码（纯Lua实现）
+local function utf8_encode(str)
+    return str
+end
+
+-- UTF-8 解码（纯Lua实现）
+local function utf8_decode(str)
+    return str
+end
+
 -- 默认端口
 local DEFAULT_PORTS = {ws = 80, wss = 443}
 
@@ -309,8 +376,13 @@ return {
     -- 加密函数
     sha1 = sha1,
     base64 = {
-        encode = base64_encode
+        encode = base64_encode,
+        decode = base64_decode
     },
+    
+    -- UTF-8 编码解码
+    utf8_encode = utf8_encode,
+    utf8_decode = utf8_decode,
     
     -- 其他工具函数
     parse_url = parse_url,

@@ -18,16 +18,71 @@
 
 ## 文件结构
 
-- `Src/caixia_websocket.lua` - 模块入口文件，定义WebSocket帧类型常量并实现动态加载机制，同时支持客户端和服务器模块，包含本地Socket实现
+- `Src/caixia_websocket-init.lua` - 模块入口文件，统一化模块初始化和导出
+- `Src/caixia_websocket.lua` - 实现WebSocket帧类型常量并实现动态加载机制，同时支持客户端和服务器模块，包含本地Socket实现
 - `Src/caixia_tools.lua` - 实现位操作、字节读写、SHA1哈希、Base64编码、URL解析和随机密钥生成等基础工具函数
 - `Src/caixia_frame.lua` - 实现WebSocket帧处理功能，包括帧编码/解码、掩码处理、长度编码和关闭帧处理
 - `Src/caixia_handshake.lua` - 实现WebSocket握手协议，包含Sec-WebSocket-Accept计算、HTTP头解析、升级请求构建和升级响应处理
 - `Src/caixia_sync.lua` - 实现WebSocket的同步操作功能，包括连接、发送、接收和关闭等操作
 - `Src/caixia_client_sync.lua` - 实现WebSocket客户端的具体功能，包括建立TCP连接和封装底层套接字操作
 - `Src/caixia_server.lua` - 实现WebSocket服务器功能，包括监听连接、处理客户端握手、管理连接对象、收发消息和广播消息
-- `Src/caixia_websocket-init.lua` - 模块初始化文件，定义WS模块表和各种工厂方法
-- `websocket-init-example.lua` - WebSocket功能使用示例脚本
-- `test-caixia-server.lua` - CaiXia WebSocket服务器功能全面测试脚本
+- `Src/caixia_json.lua` - 实现JSON编码和解码功能，用于消息序列化和反序列化
+
+
+
+## 全部工具函数
+=== 开始测试caixia_websocket-init模块 ===
+✓ 模块加载成功
+模块版本: 1.0.0
+
+=== 测试核心WebSocket函数 ===
+✓ 函数 createClient 存在
+✓ 函数 createServer 存在
+✓ 函数 startServer 存在
+✓ 函数 init 存在
+
+=== 测试帧处理函数 ===
+✓ 函数 encodeFrame 存在
+✓ 函数 decodeFrame 存在
+✓ 函数 encodeClose 存在
+✓ 函数 decodeClose 存在
+
+=== 测试握手相关函数 ===
+✓ 函数 acceptUpgrade 存在
+✓ 函数 upgradeRequest 存在
+✓ 函数 secWebSocketAccept 存在
+✓ 函数 httpHeaders 存在
+
+=== 测试工具函数 ===
+✓ 工具函数 band 存在
+✓ 工具函数 bor 存在
+✓ 工具函数 bxor 存在
+✓ 工具函数 rshift 存在
+✓ 工具函数 lshift 存在
+✓ 工具函数 read_int8 存在
+✓ 工具函数 read_int16 存在
+✓ 工具函数 read_int32 存在
+✓ 工具函数 write_int8 存在
+✓ 工具函数 write_int16 存在
+✓ 工具函数 write_int32 存在
+✓ 工具函数 utf8_encode 存在
+✓ 工具函数 utf8_decode 存在
+✓ 工具函数 sha1 存在
+✓ 工具函数 base64_encode 存在
+✓ 工具函数 base64_decode 存在
+✓ 工具函数 parse_url 存在
+✓ 工具函数 json_encode 存在
+✓ 工具函数 json_decode 存在
+
+=== 测试帧类型常量 ===
+✓ 帧类型常量 CONTINUATION = 0
+✓ 帧类型常量 TEXT = 1
+✓ 帧类型常量 CLOSE = 8
+✓ 帧类型常量 BINARY = 2
+✓ 帧类型常量 PING = 9
+✓ 帧类型常量 PONG = 10
+
+
 
 
 ## 使用方法
@@ -37,13 +92,36 @@
 #### 1. 导入模块
 
 ```lua
-local CaiXiaSocket = require('caixia_websocket')
+-- WebSocket初始化模块测试文件
+-- 重构版本：完整导出caixia_websocket-init.lua中的所有可使用函数和方法
+-- 在WindoCaiXiaWS环境下设置控制台编码为UTF-8
+if package.config:sub(1,1) == '\\' then -- WindoCaiXiaWS系统
+    os.execute('chcp 65001 >nul') -- 设置代码页为UTF-8，>nul表示不显示输出
+end
+
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
+
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+
+-- 添加Src目录到package.path，确保能正确加载模块
+package.path = scriptDir .. 'Src/?.lua;' .. package.path
+-- 加载WebSocket初始化模块
+local status, CaiXiaWS = pcall(function() 
+    return require('caixia_websocket-init')
+end);
 ```
 
 #### 2. 创建客户端实例
 
 ```lua
-local client = CaiXiaSocket.client()
+local client = CaiXiaWS.client()
 ```
 
 #### 3. 连接到WebSocket服务器
@@ -68,7 +146,7 @@ end
 
 -- 发送二进制数据
 local binary_data = '\x01\x02\x03\x04'
-local success, was_clean, code, reason = client:send(binary_data, CaiXiaSocket.BINARY)
+local success, was_clean, code, reason = client:send(binary_data, CaiXiaWS.BINARY)
 if not success then
     print('发送失败:', reason)
 end
@@ -80,9 +158,9 @@ end
 -- 接收数据
 local data, opcode = client:receive()
 if data then
-    if opcode == CaiXiaSocket.TEXT then
+    if opcode == CaiXiaWS.TEXT then
         print('收到文本数据:', data)
-    elseif opcode == CaiXiaSocket.BINARY then
+    elseif opcode == CaiXiaWS.BINARY then
         print('收到二进制数据，长度:', #data)
     end
 else
@@ -106,13 +184,36 @@ end
 #### 1. 导入模块
 
 ```lua
-local CaiXiaSocket = require('caixia_websocket')
+-- WebSocket初始化模块测试文件
+-- 重构版本：完整导出caixia_websocket-init.lua中的所有可使用函数和方法
+-- 在WindoCaiXiaWS环境下设置控制台编码为UTF-8
+if package.config:sub(1,1) == '\\' then -- WindoCaiXiaWS系统
+    os.execute('chcp 65001 >nul') -- 设置代码页为UTF-8，>nul表示不显示输出
+end
+
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
+
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+
+-- 添加Src目录到package.path，确保能正确加载模块
+package.path = scriptDir .. 'Src/?.lua;' .. package.path
+-- 加载WebSocket初始化模块
+local status, CaiXiaWS = pcall(function() 
+    return require('caixia_websocket-init')
+end);
 ```
 
 #### 2. 创建服务器实例
 
 ```lua
-local server = CaiXiaSocket.server()
+local server = CaiXiaWS.server()
 ```
 
 #### 3. 设置事件回调
@@ -172,22 +273,22 @@ end
 
 ```lua
 -- 发送文本消息给特定客户端
-server:send(client_id, 'Hello from server!', CaiXiaSocket.TEXT)
+server:send(client_id, 'Hello from server!', CaiXiaWS.TEXT)
 
 -- 发送二进制消息给特定客户端
 local binary_data = '\x01\x02\x03\x04'
-server:send(client_id, binary_data, CaiXiaSocket.BINARY)
+server:send(client_id, binary_data, CaiXiaWS.BINARY)
 ```
 
 #### 7. 广播消息给所有客户端
 
 ```lua
 -- 广播文本消息给所有客户端
-server:broadcast('Server broadcast message!', CaiXiaSocket.TEXT)
+server:broadcast('Server broadcast message!', CaiXiaWS.TEXT)
 
 -- 广播二进制消息给所有客户端
 local binary_data = '\x01\x02\x03\x04'
-server:broadcast(binary_data, CaiXiaSocket.BINARY)
+server:broadcast(binary_data, CaiXiaWS.BINARY)
 ```
 
 #### 8. 关闭服务器
