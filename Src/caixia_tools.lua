@@ -28,32 +28,54 @@ local function band(a, b) -- 按位与
     return result
 end
 
-local function bor(a, b) -- 按位或
-    local result = 0
-    local bit = 1
-    while a > 0 or b > 0 do
-        if (a % 2 == 1) or (b % 2 == 1) then
-            result = result + bit
+local function bor(a, b, ...) -- 按位或，支持多个参数
+    if select('#', ...) == 0 then
+        -- 处理两个参数的情况
+        local result = 0
+        local bit = 1
+        while a > 0 or b > 0 do
+            if (a % 2 == 1) or (b % 2 == 1) then
+                result = result + bit
+            end
+            bit = bit * 2
+            a = mfloor(a / 2)
+            b = mfloor(b / 2)
         end
-        bit = bit * 2
-        a = mfloor(a / 2)
-        b = mfloor(b / 2)
+        return result
+    else
+        -- 处理多个参数的情况（递归调用）
+        local result = bor(a, b)
+        local args = { ... }
+        for i = 1, #args do
+            result = bor(result, args[i])
+        end
+        return result
     end
-    return result
 end
 
-local function bxor(a, b) -- 按位异或
-    local result = 0
-    local bit = 1
-    while a > 0 or b > 0 do
-        if (a % 2 == 1) ~= (b % 2 == 1) then
-            result = result + bit
+local function bxor(a, b, ...) -- 按位异或，支持多个参数
+    if select('#', ...) == 0 then
+        -- 处理两个参数的情况
+        local result = 0
+        local bit = 1
+        while a > 0 or b > 0 do
+            if (a % 2 == 1) ~= (b % 2 == 1) then
+                result = result + bit
+            end
+            bit = bit * 2
+            a = mfloor(a / 2)
+            b = mfloor(b / 2)
         end
-        bit = bit * 2
-        a = mfloor(a / 2)
-        b = mfloor(b / 2)
+        return result
+    else
+        -- 处理多个参数的情况（递归调用）
+        local result = bxor(a, b)
+        local args = { ... }
+        for i = 1, #args do
+            result = bxor(result, args[i])
+        end
+        return result
     end
-    return result
 end
 
 local function bnot(a) -- 按位非（这里简单实现为取反）
@@ -254,7 +276,9 @@ end
 
 -- 生成随机密钥
 local function generate_key()
-    math.randomseed(os.time() + math.abs(tonumber(tostring({}):sub(8)))) -- 简单的随机种子
+    -- 安全处理可能为nil的情况，确保传入math.abs的是有效数字
+    local random_value = tonumber(tostring({}):sub(8)) or 0
+    math.randomseed(os.time() + math.abs(random_value)) -- 简单的随机种子
     local r1 = mrandom(0, 0xfffffff)
     local r2 = mrandom(0, 0xfffffff)
     local r3 = mrandom(0, 0xfffffff)
