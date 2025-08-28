@@ -1,5 +1,4 @@
 -- 原生Lua WebSocket模块入口
--- 不依赖任何外部库
 
 -- 定义WebSocket帧类型常量
 local FRAME = {
@@ -153,6 +152,58 @@ function CaiXiaSocketImpl:close()
     return true
 end
 
+-- HTTP请求功能实现
+local function http_request(url, method, headers, body)
+    -- 检查luasocket是否可用
+    if not socket_available then
+        return nil, "luasocket库不可用，无法执行HTTP请求"
+    end
+    
+    method = method or "GET"
+    headers = headers or {}
+    
+    -- 设置默认User-Agent
+    if not headers["User-Agent"] then
+        headers["User-Agent"] = "CaiXiaWebSocket/1.0"
+    end
+    
+    -- 如果是POST请求且有body，设置Content-Length
+    if method == "POST" and body then
+        headers["Content-Length"] = tostring(#body)
+    end
+    
+    -- 准备请求选项
+    local request_options = {
+        url = url,
+        method = method,
+        headers = headers,
+    }
+    
+    -- 设置请求体接收器
+    local response_body = {}
+    request_options.sink = ltn12.sink.table(response_body)
+    
+    -- 如果有请求体，设置源
+    if method == "POST" and body then
+        request_options.source = ltn12.source.string(body)
+    end
+    
+    -- 发送请求
+    local result, status_code, response_headers, response_status = http.request(request_options)
+    
+    -- 处理响应
+    if result then
+        return {
+            status_code = status_code,
+            headers = response_headers,
+            body = table.concat(response_body),
+            status = response_status
+        }
+    else
+        return nil, status_code -- status_code 包含错误信息
+    end
+end
+
 -- 设置模块元表，实现动态加载
 local _M = setmetatable({}, {
     __index = function(self, key)
@@ -222,6 +273,15 @@ _M.PONG = FRAME.PONG
 -- 创建WebSocket客户端的工厂方法
 function _M.client()
     return require('Src.caixia_client_sync')
+end
+
+-- 导出HTTP请求方法
+function _M.http_get(url, headers)
+    return http_request(url, "GET", headers)
+end
+
+function _M.http_post(url, body, headers)
+    return http_request(url, "POST", headers, body)
 end
 
 -- 返回模块

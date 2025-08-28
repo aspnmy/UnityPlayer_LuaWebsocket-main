@@ -345,7 +345,19 @@ end
 local function generate_key()
     -- 安全处理可能为nil的情况，确保传入math.abs的是有效数字
     local random_value = tonumber(tostring({}):sub(8)) or 0
-    math.randomseed(os.time() + math.abs(random_value)) -- 简单的随机种子
+    
+    -- 在Unity引擎环境中使用CS.UnityEngine.Time代替os.time
+    local seed_value = 0
+    if CS and CS.UnityEngine and CS.UnityEngine.Time then
+        -- 使用Unity的Time.time获取时间戳
+        seed_value = math.floor(CS.UnityEngine.Time.time)
+    else
+        -- 备用方案：使用os.time()或固定值
+        local os_time_ok, os_time = pcall(function() return os.time() end)
+        seed_value = os_time_ok and os_time or 1756382908
+    end
+    
+    math.randomseed(seed_value + math.abs(random_value)) -- 简单的随机种子
     local r1 = mrandom(0, 0xfffffff)
     local r2 = mrandom(0, 0xfffffff)
     local r3 = mrandom(0, 0xfffffff)

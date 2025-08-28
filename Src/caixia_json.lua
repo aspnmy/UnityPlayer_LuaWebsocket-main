@@ -2,6 +2,11 @@
 local unpack = unpack or table.unpack
 if table.unpack then unpack = table.unpack end
 
+-- 定义本地的json表，包含null值
+local json = {
+    null = nil
+}
+
 local function is_array(table)
     local max = 0
     local count = 0

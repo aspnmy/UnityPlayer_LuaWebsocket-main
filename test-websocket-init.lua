@@ -251,7 +251,17 @@ function exports.runTests()
     -- 测试URL解析函数
     print("\n=== 测试URL解析函数 ===")
     if exports.parse_url then
-       local apiUrl = "https://api.caixiagame.us.earth-oline.org/api?type=serverlist&time=" .. os.time()
+       -- 在Unity引擎环境中使用CS.UnityEngine.Time代替os.time
+       local timestamp = 0
+       if CS and CS.UnityEngine and CS.UnityEngine.Time then
+           -- 使用Unity的Time.time获取时间戳
+           timestamp = math.floor(CS.UnityEngine.Time.time)
+       else
+           -- 备用方案：使用os.time()或固定值
+           local os_time_ok, os_time = pcall(function() return os.time() end)
+           timestamp = os_time_ok and os_time or 1756382908
+       end
+       local apiUrl = "https://api.caixiagame.us.earth-oline.org/api?type=serverlist&time=" .. timestamp
 
         local url = "CaiXiaWS://s5.v100.vip:37667"
         local protocol, host, port, uri = exports.parse_url(url)
