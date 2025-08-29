@@ -1,7 +1,9 @@
 # UnityPlayer_LuaWebsocket-main 原生Lua WebSocket组件
 这是一个不依赖任何外部库的Lua 5.4原生WebSocket组件，专门为《了不起的修仙模拟器》（Amazing Cultivation Simulator）游戏Mod开发提供Lua-Websocket原生支持，作为多人游戏基础业务支撑。同时支持WebSocket客户端和服务器功能。
 
+## 如何让Mod支持联网
 
+- 查看本项目 test-Mod 文件夹，里面有一个简单的Mod示例，展示了如何使用本组件实现联网功能。
 
 
 

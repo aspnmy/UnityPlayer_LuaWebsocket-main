@@ -1,11 +1,23 @@
 -- 原生Lua WebSocket握手协议实现
 -- 不依赖任何外部库
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
 
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+-- 拼接模块路径 - 设置为正确的Src目录路径
+package.path = package.path .. ';' .. scriptDir .. '../Src/?.lua'
 local tinsert = table.insert
 local tconcat = table.concat
 
 -- 导入工具函数
-local CaiXiaTools = require('Src.caixia_tools')
+local CaiXiaTools = require('caixia_tools')
+
 local sha1 = CaiXiaTools.sha1
 local base64_encode = CaiXiaTools.base64.encode
 

@@ -1,10 +1,21 @@
 -- 不依赖任何外部库
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
 
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+-- 拼接模块路径 - 设置为正确的Src目录路径
+package.path = package.path .. ';' .. scriptDir .. '../Src/?.lua'
 -- 导入必要的模块
-local CaiXiaSocket = require('Src.caixia_websocket')
-local CaiXiaSync = require('Src.caixia_sync')
-local CaiXiaHandshake = require('Src.caixia_handshake')
-local CaiXiaTools = require('Src.caixia_tools')
+local CaiXiaSocket = require('caixia_websocket')
+local CaiXiaSync = require('caixia_sync')
+local CaiXiaHandshake = require('caixia_handshake')
+local CaiXiaTools = require('caixia_tools')
 
 -- WebSocket服务器类
 local CaiXiaServer = {}

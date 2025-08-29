@@ -1,4 +1,16 @@
 -- 原生Lua WebSocket模块入口
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
+
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+-- 拼接模块路径 - 设置为正确的Src目录路径
+package.path = package.path .. ';' .. scriptDir .. '../Src/?.lua'
 
 -- 定义WebSocket帧类型常量
 local FRAME = {
@@ -77,6 +89,25 @@ end
 function CaiXiaSocketImpl:settimeout(timeout)
     self.timeout = timeout
     return true
+end
+
+-- 连接到服务器
+function CaiXiaSocketImpl:connect(host, port)
+    -- 模拟连接行为
+    self.is_client = true
+    self.host = host
+    self.port = port
+    self.is_connected = true
+    
+    -- 模拟非阻塞模式下的行为
+    if self.timeout == 0 then
+        -- 在非阻塞模式下，返回'Operation already in progress'
+        return nil, 'Operation already in progress'
+    else
+        -- 在阻塞模式下，返回成功
+        print('客户端连接到 ' .. host .. ':' .. port)
+        return 1
+    end
 end
 
 -- 接受新连接
@@ -216,42 +247,42 @@ local _M = setmetatable({}, {
         
         -- 如果请求的是客户端
         if key == 'client' then
-            local client = require('Src.caixia_client_sync')
+            local client = require('caixia_client_sync')
             self.client = client
             return client
         end
         
         -- 如果请求的是服务器
         if key == 'server' then
-            local server = require('Src.caixia_server')
+            local server = require('caixia_server')
             self.server = server
             return server
         end
         
         -- 如果请求的是帧处理模块
         if key == 'frame' then
-            local frame = require('Src.caixia_frame')
+            local frame = require('caixia_frame')
             self.frame = frame
             return frame
         end
         
         -- 如果请求的是握手模块
         if key == 'handshake' then
-            local handshake = require('Src.caixia_handshake')
+            local handshake = require('caixia_handshake')
             self.handshake = handshake
             return handshake
         end
         
         -- 如果请求的是同步操作模块
         if key == 'sync' then
-            local sync = require('Src.caixia_sync')
+            local sync = require('caixia_sync')
             self.sync = sync
             return sync
         end
         
         -- 如果请求的是工具模块
         if key == 'tools' then
-            local tools = require('Src.caixia_tools')
+            local tools = require('caixia_tools')
             self.tools = tools
             return tools
         end
@@ -272,7 +303,7 @@ _M.PONG = FRAME.PONG
 
 -- 创建WebSocket客户端的工厂方法
 function _M.client()
-    return require('Src.caixia_client_sync')
+    return require('caixia_client_sync')
 end
 
 -- 导出HTTP请求方法

@@ -1,19 +1,30 @@
 -- WebSocket初始化模块
 -- 统一化注册所有功能，方便外部进行统一调用
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
 
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+-- 拼接模块路径 - 设置为正确的Src目录路径
+package.path = package.path .. ';' .. scriptDir .. '../Src/?.lua'
 -- 导入所有必要的模块
 CaiXiaLuaServer = {}
 
-CaiXiaLuaServer.websocket = require('Src.caixia_websocket')
-CaiXiaLuaServer.client_sync = require('Src.caixia_client_sync')
-CaiXiaLuaServer.server = require('Src.caixia_server')
-CaiXiaLuaServer.frame = require('Src.caixia_frame')
-CaiXiaLuaServer.handshake = require('Src.caixia_handshake')
-CaiXiaLuaServer.sync = require('Src.caixia_sync')
-CaiXiaLuaServer.tools = require('Src.caixia_tools')
+CaiXiaLuaServer.websocket = require('caixia_websocket')
+CaiXiaLuaServer.client_sync = require('caixia_client_sync')
+CaiXiaLuaServer.server = require('caixia_server')
+CaiXiaLuaServer.frame = require('caixia_frame')
+CaiXiaLuaServer.handshake = require('caixia_handshake')
+CaiXiaLuaServer.sync = require('caixia_sync')
+CaiXiaLuaServer.tools = require('caixia_tools')
 
 -- 导入Json模块
-CaiXiaLuaServer.CaiXiaJson = require('Src.caixia_json')
+CaiXiaLuaServer.CaiXiaJson = require('caixia_json')
 
 
 

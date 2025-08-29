@@ -1,4 +1,17 @@
 
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
+
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+-- 拼接模块路径 - 设置为正确的Src目录路径
+package.path = package.path .. ';' .. scriptDir .. '../Src/?.lua'
+
 local unpack = unpack or table.unpack
 if table.unpack then unpack = table.unpack end
 

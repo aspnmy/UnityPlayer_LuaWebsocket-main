@@ -1,13 +1,24 @@
 -- 原生Lua WebSocket同步操作实现
 -- 不依赖任何外部库
+-- 设置package.path以便正确加载模块
+local function getCurrentScriptDir()
+    local info = debug.getinfo(1, 'S')
+    local scriptPath = info.source:sub(2) -- 去掉前面的@符号
+    local scriptDir = scriptPath:match('(.*[/\\])')
+    return scriptDir or ''
+end
 
+-- 获取当前脚本目录
+local scriptDir = getCurrentScriptDir()
+-- 拼接模块路径 - 设置为正确的Src目录路径
+package.path = package.path .. ';' .. scriptDir .. '../Src/?.lua'
 local tinsert = table.insert
 local tconcat = table.concat
 
 -- 导入必要的模块
-local frame = require('Src.caixia_frame')
-local handshake = require('Src.caixia_handshake')
-local tools = require('Src.caixia_tools')
+local frame = require('caixia_frame')
+local handshake = require('caixia_handshake')
+local tools = require('caixia_tools')
 
 -- 接收WebSocket数据
 local function receive(self)
