@@ -369,7 +369,9 @@ local function generate_key()
         seed_value = os_time_ok and os_time or 1756382908
     end
     
-    math.randomseed(seed_value + math.abs(random_value)) -- 简单的随机种子
+    -- 确保传入math.randomseed的是有效整数
+    local seed = math.floor(seed_value + math.abs(random_value))
+    math.randomseed(seed) -- 使用整数作为随机种子
     local r1 = mrandom(0, 0xfffffff)
     local r2 = mrandom(0, 0xfffffff)
     local r3 = mrandom(0, 0xfffffff)

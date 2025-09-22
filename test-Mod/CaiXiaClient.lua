@@ -125,6 +125,18 @@ local function caiXiaClient_StartRun()
 	local client = CaiXiaWS.createClient({
 		on_close = function()
 			print("  [客户端] 连接已关闭")
+		end,
+		on_message = function(data, opcode)
+			print("  [客户端] 收到服务器消息")
+			if opcode == CaiXiaWS.TEXT then
+				print('收到文本数据:', data)
+				-- 保存文本数据到日志文件
+				writeToLogFile(data, '文本')
+			elseif opcode == CaiXiaWS.BINARY then
+				print('收到二进制数据，长度:', #data)
+				-- 对于二进制数据，我们只记录长度和时间戳
+				writeToLogFile(string.format('二进制数据，长度: %d', #data), '二进制')
+			end
 		end
 	})
 
@@ -189,6 +201,83 @@ local function caiXiaClient_SendBinary_data(binary_data)
 	end
 end
 
+-- 创建logs目录的函数
+local function createLogsDir()
+    print('调试：尝试创建logs目录')
+    -- 在脚本同级目录下创建logs目录
+    local logs_dir = scriptDir .. 'logs'
+    -- 首先检查是否可以加载lfs模块
+    local status, fs = pcall(require, 'lfs')
+    if not status then
+        print('错误: 无法加载lfs模块，请确保已安装LuaFileSystem')
+        -- 尝试使用简单的方式检查目录是否存在
+        local file = io.open(logs_dir .. '/.test', 'w')
+        if file then
+            file:close()
+            os.remove(logs_dir .. '/.test')
+            return true
+        else
+            print('创建logs目录失败: 无法创建目录或打开文件')
+            -- 尝试使用os.execute创建目录（Windows和Linux兼容）
+            local cmd = ''
+            if package.config:sub(1,1) == '\\' then -- Windows系统
+                cmd = 'mkdir ' .. logs_dir
+            else -- 非Windows系统
+                cmd = 'mkdir -p ' .. logs_dir
+            end
+            local ok = os.execute(cmd)
+            if ok then
+                print('使用系统命令创建logs目录成功')
+                return true
+            else
+                print('使用系统命令创建logs目录也失败')
+                return false
+            end
+        end
+    end
+    
+    -- 如果lfs模块加载成功
+    if not fs.attributes(logs_dir) then
+        print('logs目录不存在，正在创建...')
+        local ok, err = fs.mkdir(logs_dir)
+        if not ok then
+            print('创建logs目录失败:', err)
+            return false
+        else
+            print('logs目录创建成功')
+        end
+    else
+        print('logs目录已存在')
+    end
+    return true
+end
+
+-- 将数据写入日志文件的函数
+local function writeToLogFile(data, data_type)
+    -- 确保logs目录存在
+    if not createLogsDir() then
+        return
+    end
+    
+    -- 创建带日期的日志文件名
+    local date = os.date('%Y%m%d')
+    local log_file_path = string.format('%s/client_received_%s.log', scriptDir .. 'logs', date)
+    
+    -- 打开文件进行追加写入
+    local file, err = io.open(log_file_path, 'a')
+    if not file then
+        print('无法打开日志文件:', err)
+        return
+    end
+    
+    -- 写入数据和时间戳
+    local timestamp = os.date('%Y-%m-%d %H:%M:%S')
+    file:write(string.format('[%s] %s数据: %s\n', timestamp, data_type, data))
+    file:close()
+    
+    print(string.format('数据已保存到日志文件: %s', log_file_path))
+end
+
 local function caiXiaClient_Receive()
 	-- 接收数据
 	if not CaiXiaWS.client then
@@ -199,11 +288,15 @@ local function caiXiaClient_Receive()
 	if data then
 		if opcode == CaiXiaWS.TEXT then
 			print('收到文本数据:', data)
+			-- 保存文本数据到日志文件
+			writeToLogFile(data, '文本')
 		elseif opcode == CaiXiaWS.BINARY then
 			print('收到二进制数据，长度:', #data)
+			-- 对于二进制数据，我们只记录长度和时间戳
+			writeToLogFile(string.format('二进制数据，长度: %d', #data), '二进制')
 		end
 	else
-		print('接收数据失败或超时')
+		-- print('接收数据失败或超时') -- 为了不干扰事件循环，不再打印超时信息
 	end
 end
 
@@ -222,52 +315,57 @@ local function caiXiaClient_Close()
 end
 
 local function main()
-	print("=== 开始测试CaiXia WebSocket服务器和客户端 ===")
+
+	print("=== 开始测试CaiXia WebSocket客户端 ===")
 	
-	-- 启动本地服务器：0.0.0.0:9559
-	print("\n1. 启动WebSocket服务器...")
-	local server = caiXiaServer_StartRun()
-	
-	-- 启动服务器后检查状态
-	if server and server.is_running then
-		-- 服务器状态检查
-		caiXiaServer_TestRun(server)
-			
-		-- 连接本地服务器：localhost:9559
-		print("\n2. 启动WebSocket客户端...")
-		local client = caiXiaClient_StartRun()
-		
-		if client then
-			print("\n3. 客户端连接服务器...")
-			local connected = caiXiaClient_ConnectTo("localhost", "9559")
-			
-			if connected then
-				print("\n4. 客户端发送测试消息...")
-				caiXiaClient_SendText("Hello from CaiXia WebSocket Client!")
-				
-				-- 接收服务器回复
-				print("\n5. 客户端等待接收服务器回复...")
-				caiXiaClient_Receive()
-				
-				-- 发送二进制数据
-				print("\n6. 客户端发送二进制数据...")
-				caiXiaClient_SendBinary_data()
-				
-				-- 关闭连接
-				print("\n7. 客户端关闭连接...")
-				caiXiaClient_Close()
-			else
-				print("\n客户端连接服务器失败，跳过后续测试")
-			end
-		else
-			print("\n创建客户端失败，跳过后续测试")
-		end
+	-- 预创建logs目录，确保日志功能可用
+	print("\n1. 初始化日志系统...")
+	local logs_ready = createLogsDir()
+	if logs_ready then
+		print("  ✓ 日志系统初始化成功")
 	else
-		print("\n服务器启动失败，跳过客户端测试")
+		print("  ✗ 日志系统初始化失败，但仍继续运行")
 	end
 	
-	print("\n=== CaiXia WebSocket测试完成 ===")
+	-- 连接本地服务器：localhost:9559
+	print("\n2. 启动WebSocket客户端...")
+	local client = caiXiaClient_StartRun()
+	
+	if client then
+		print("\n3. 客户端连接服务器...")
+		local connected = caiXiaClient_ConnectTo("localhost", "9559")
+		
+		if connected then
+			print("\n4. 客户端发送测试消息...")
+			caiXiaClient_SendText("Hello from CaiXia WebSocket Client!")
+			
+			-- 客户端常驻后台运行
+			print("\n客户端已连接服务器并将常驻后台运行...")
+			print("按Ctrl+C可以停止客户端。\n")
+			
+			-- 事件循环，使客户端常驻后台
+			while true do
+				-- 尝试接收服务器消息
+				print('调试：尝试接收服务器消息...')
+				caiXiaClient_Receive()
+				
+				-- 短暂延时，避免CPU占用过高
+				-- 在Windows系统上使用ping命令实现延时
+				if package.config:sub(1,1) == '\\' then -- Windows系统
+					os.execute('ping -n 2 127.0.0.1 >nul') -- 大约1秒延时
+				else -- 非Windows系统
+					os.execute('sleep 1') -- 1秒延时
+				end
+			end
+		else
+			print("\n客户端连接服务器失败，跳过后续测试")
+		end
+	else
+		print("\n创建客户端失败，跳过后续测试")
+	end
+
 end
+	
 
 -- 执行主函数
 main()

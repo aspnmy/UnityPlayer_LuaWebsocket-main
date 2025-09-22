@@ -99,8 +99,11 @@ end
 ---@return table|nil WebSocket服务器实例或nil（如果启动失败）
 ---@return string|nil 错误信息或nil（如果成功）
 function CaiXiaLuaServer.WS.startServer(host, port, options)
+    options = options or {}
     local server = CaiXiaLuaServer.WS.createServer(options)
-    return server:listen(host, port)
+    -- 从options中获取最大连接数，如果没有提供则使用默认值
+    local max_connections = options.max_connections
+    return server:listen(host, port, max_connections)
 end
 
 -- 导入常用工具函数

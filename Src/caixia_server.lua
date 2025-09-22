@@ -67,7 +67,7 @@ function CaiXiaServer_client:new(sock, CaiXiaServer)
 end
 
 -- 初始化服务器
-function CaiXiaServer:listen(host, port)
+function CaiXiaServer:listen(host, port, max_connections)
     -- 如果服务器已在运行，先停止
     if self.is_running then
         self:close()
@@ -89,8 +89,9 @@ function CaiXiaServer:listen(host, port)
         return nil, 'Failed to bind: ' .. err
     end
     
-    -- 开始监听连接
-    ok, err = CaiXiaSock:listen(128) -- 最大连接数
+    -- 开始监听连接，默认最大连接数为128
+    local backlog = max_connections or 128
+    ok, err = CaiXiaSock:listen(backlog)
     if not ok then
         CaiXiaSock:close()
         return nil, 'Failed to listen: ' .. err
